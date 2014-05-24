@@ -7,6 +7,9 @@
   
 - name: Register service
   command: /sbin/chkconfig --add elasticsearch
+  
+- name: Install Marvel
+  command: /usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/latest creates=/usr/share/elasticsearch/plugins/marvel
 
 - name: Restart Elasticsearch
   service: name=elasticsearch state=restarted
