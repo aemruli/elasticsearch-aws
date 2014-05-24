@@ -1,0 +1,5 @@
+configDir : /etc/elasticsearch
+homeDir: /usr/share/elasticsearch
+logDir: /var/log/elasticsearch
+dataDir: /var/lib/elasticsearch
+tmpDir: /tmp/elasticsearch

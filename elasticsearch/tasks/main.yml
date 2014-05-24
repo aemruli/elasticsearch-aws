@@ -1,3 +1,6 @@
 ---
 - name: install elasticsearch
   yum: name=elasticsearch state=latest
+  
+- name: Add elasticsearch paths to configuration  
+  lineinfile: dest={{ homeDir }}/bin/elasticsearch.in.sh regexp='ES_JAVA_OPTS' line='-Des.config={{ configDir }}/elasticsearch.yml -Des.path.conf={{ configDir }}/ -Des.path.home={{ homeDir }} -Des.path.logs={{ logDir }} -Des.path.data={{ dataDir}} -Des.path.work= {{ workDir }} -Des.path.plugins={{ homeDir }}/plugins'
