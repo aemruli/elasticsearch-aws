@@ -1,0 +1,98 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+
+    "Description": "Elasticsearch Cloudformation Sample",
+
+    "Parameters": {
+        "Environment": {
+            "Description": "Environment (e.g. dev, int)",
+            "Type": "String",
+            "AllowedValues": ["dev", "test"]
+        }
+    },
+    "Resources": {
+        "ElasticSearchProductionNode": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sda1",
+                        "Ebs": {
+                            "VolumeSize": "8"
+                        }
+                    }
+                ],
+                "ImageId": "ami-2918e35e",
+                "InstanceType": "m3.medium",
+                "KeyName": "elasticsearch",
+                "SecurityGroups": [
+                    {
+                        "Ref": "ElasticSearchSecurityGroup"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Environment",
+                        "Value": {
+                            "Ref": "Environment"
+                        }
+                    }
+                ]
+            }
+        },
+        "ElasticSearchSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Enable SSH access via port 22 and 9020",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "22",
+                        "ToPort": "22",
+                        "CidrIp": "46.5.170.73/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "9020",
+                        "ToPort": "9020",
+                        "CidrIp": "46.5.170.73/32"
+                    }
+                ]
+            }
+        },
+        "ElasticSearchHostedZone": {
+            "Type": "AWS::Route53::RecordSet",
+            "Properties": {
+                "HostedZoneName": "mimacom.solutions.",
+                "Comment": "DNS name for Elasticsearch server",
+                "Name": {
+                    "Fn::Join": [ "", [
+                        {
+                            "Ref": "Environment"
+                        },
+                        ".",
+                        "els",
+                        ".",
+                        "mimacom.solutions" ,
+                        "."
+                    ] ]
+                },
+                "Type": "A",
+                "TTL": "60",
+                "ResourceRecords": [
+                    {
+                        "Fn::GetAtt": [ "ElasticSearchProductionNode", "PublicIp" ]
+                    }
+                ]
+            }
+        }
+     },
+    "Outputs": {
+        "ElasticSearchHostName": {
+            "Description": "Public hostname for the Elasticsearch Node",
+            "Value": {
+                "Ref": "ElasticSearchHostedZone"
+            }
+        }       
+    }
+}
