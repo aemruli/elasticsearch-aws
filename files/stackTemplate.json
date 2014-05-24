@@ -11,6 +11,63 @@
         }
     },
     "Resources": {
+		"ElasticSearchRole": {
+	         "Type": "AWS::IAM::Role",
+	         "Properties": {
+	            "AssumeRolePolicyDocument": {
+	               "Version" : "2012-10-17",
+	               "Statement": [ {
+	                  "Effect": "Allow",
+	                  "Principal": {
+	                     "Service": [ "ec2.amazonaws.com" ]
+	                  },
+	                  "Action": [ "sts:AssumeRole" ]
+	               } ]
+	            },
+	            "Path": "/",
+	            "Policies": [ {
+	               "PolicyName": "elasticsearch",
+	               "PolicyDocument": {
+	                  "Version" : "2012-10-17",
+					  "Statement": [
+					    {
+					      "Effect": "Allow",
+					      "Action": "ec2:Describe*",
+					      "Resource": "*"
+					    },
+					    {
+					      "Effect": "Allow",
+					      "Action": "elasticloadbalancing:Describe*",
+					      "Resource": "*"
+					    },
+					    {
+					      "Effect": "Allow",
+					      "Action": [
+					        "cloudwatch:ListMetrics",
+					        "cloudwatch:GetMetricStatistics",
+					        "cloudwatch:Describe*"
+					      ],
+					      "Resource": "*"
+					    },
+					    {
+					      "Effect": "Allow",
+					      "Action": "autoscaling:Describe*",
+					      "Resource": "*"
+					    }
+					  ]
+	               }
+               } ]
+            }
+         },
+         "ElasticSearchNodeInstanceProfile": {
+	         "Type": "AWS::IAM::InstanceProfile",
+	         "Properties": {
+	            "Path": "/",
+	            "Roles": [ {
+	               "Ref": "ElasticSearchRole"
+	            } ]
+	         }
+         },
         "ElasticSearchProductionNode": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
@@ -18,12 +75,16 @@
                     {
                         "DeviceName": "/dev/sda1",
                         "Ebs": {
-                            "VolumeSize": "8"
+							"DeleteOnTermination" : "false",
+                            "VolumeSize": "40"
                         }
                     }
                 ],
                 "ImageId": "ami-2918e35e",
                 "InstanceType": "m3.medium",
+				"IamInstanceProfile": {
+                            "Ref": "ElasticSearchNodeInstanceProfile"
+                        },
                 "KeyName": "elasticsearch",
                 "SecurityGroups": [
                     {
@@ -53,8 +114,8 @@
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "9020",
-                        "ToPort": "9020",
+                        "FromPort": "9200",
+                        "ToPort": "9200",
                         "CidrIp": "46.5.170.73/32"
                     }
                 ]
