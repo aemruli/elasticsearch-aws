@@ -1,0 +1,6 @@
+discovery:
+    type: ec2
+
+cloud:
+    aws:
+        region: eu-west
