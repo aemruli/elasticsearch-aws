@@ -1,0 +1,3 @@
+---
+- name: install elasticsearch
+  yum: name=elasticsearch state=latest

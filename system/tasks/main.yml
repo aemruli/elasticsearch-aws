@@ -7,6 +7,3 @@
   
 - name: Copy file 
   copy: src=elasticsearch.repo dest=/etc/yum.repos.d/elasticsearch.repo  
-  
-- name: install elasticsearch
-  yum: name=elasticsearch state=latest
