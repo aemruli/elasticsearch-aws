@@ -11,5 +11,12 @@
 - name: Install Marvel
   command: /usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/latest creates=/usr/share/elasticsearch/plugins/marvel
 
+- name: Install AWS Plugin
+  command: /usr/share/elasticsearch/bin/plugin -i elasticsearch/elasticsearch-cloud-aws/2.1.1 creates=/usr/share/elasticsearch/plugins/cloud-aws
+
+- name: Upload Config
+  copy: src=elasticsearch.yml dest=/etc/elasticsearch/  
+
 - name: Restart Elasticsearch
   service: name=elasticsearch state=restarted
+  
