@@ -70,6 +70,26 @@
          },
         "ElasticSearchProductionNode": {
             "Type": "AWS::EC2::Instance",
+			"Metadata" : {
+		        "AWS::CloudFormation::Init" : {
+			          "config" : {
+			            "packages" : {
+			              "yum" : {
+			                "python-jinja2"          : [],
+							"git" : []
+			              }
+			            },
+						"files" : {
+						  "/home/ec2-user/ansible-hosts" : {
+						    "content" : "localhost"
+						  }
+						},
+			            "sources" : {
+			              "/home/ec2-user/" : "https://github.com/ansible/ansible/archive/v1.6.2.tar.gz"
+			            }
+			          }
+			        }
+			      },
             "Properties": {
                 "BlockDeviceMappings": [
                     {
@@ -98,7 +118,23 @@
                             "Ref": "Environment"
                         }
                     }
-                ]
+                ],
+				"UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+				          "#!/bin/bash\n",
+				          "yum update -y aws-cfn-bootstrap\n",
+
+				          "# Install Ansible\n", 
+						  "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r ElasticSearchProductionNode ", " --region ", { "Ref" : "AWS::Region" }, "\n",
+						  
+						  "# Add Ansible Environment\n", 
+						  "source /home/ec2-user/ansible-1.6.2/hacking/env-setup","\n",
+						  
+						  "# Run Ansible\n",
+						  "ansible-pull -U https://github.com/aemruli/elasticsearch-aws.git -i /home/ec2-user/ansible-hosts","\n",
+						  
+						  "# All is well so signal success\n",
+				          "/opt/aws/bin/cfn-signal -e $? '", { "Ref" : "WaitHandle" }, "'\n"
+				        ]]}}        
             }
         },
         "ElasticSearchSecurityGroup": {
@@ -146,8 +182,19 @@
                     }
                 ]
             }
-        }
-     },
+        },"WaitHandle" : {
+	      "Type" : "AWS::CloudFormation::WaitConditionHandle"
+	    },
+
+	    "WaitCondition" : {
+	      "Type" : "AWS::CloudFormation::WaitCondition",
+	      "DependsOn" : "ElasticSearchProductionNode",
+	      "Properties" : {
+	        "Handle" : {"Ref" : "WaitHandle"},
+	        "Timeout" : "300"
+	      }
+	    }
+     },                                                                          
     "Outputs": {
         "ElasticSearchHostName": {
             "Description": "Public hostname for the Elasticsearch Node",
