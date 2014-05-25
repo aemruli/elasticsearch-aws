@@ -153,6 +153,12 @@
                         "FromPort": "9200",
                         "ToPort": "9200",
                         "CidrIp": "46.5.170.73/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "9300",
+                        "ToPort": "9300",
+                        "CidrIp": "0.0.0.0/0"
                     }
                 ]
             }
