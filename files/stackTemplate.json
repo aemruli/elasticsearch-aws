@@ -68,7 +68,7 @@
 	            } ]
 	         }
          },
-        "ElasticSearchProductionNode": {
+        "ElasticSearchProductionNode1": {
             "Type": "AWS::EC2::Instance",
 			"Metadata" : {
 		        "AWS::CloudFormation::Init" : {
@@ -124,7 +124,7 @@
 				          "yum update -y aws-cfn-bootstrap\n",
 
 				          "# Install Ansible\n", 
-						  "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r ElasticSearchProductionNode ", " --region ", { "Ref" : "AWS::Region" }, "\n",
+						  "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r ElasticSearchProductionNode1 ", " --region ", { "Ref" : "AWS::Region" }, "\n",
 						  
 						  "# Add Ansible Environment\n", 
 						  "source /home/ec2-user/ansible-1.6.2/hacking/env-setup","\n",
@@ -133,7 +133,76 @@
 						  "ansible-pull -U https://github.com/aemruli/elasticsearch-aws.git -i /home/ec2-user/ansible-hosts","\n",
 						  
 						  "# All is well so signal success\n",
-				          "/opt/aws/bin/cfn-signal -e $? '", { "Ref" : "WaitHandle" }, "'\n"
+				          "/opt/aws/bin/cfn-signal -e $? '", { "Ref" : "WaitHandle1" }, "'\n"
+				        ]]}}        
+            }
+        },
+        "ElasticSearchProductionNode2": {
+            "Type": "AWS::EC2::Instance",
+			"Metadata" : {
+		        "AWS::CloudFormation::Init" : {
+			          "config" : {
+			            "packages" : {
+			              "yum" : {
+			                "python-jinja2"          : [],
+							"git" : []
+			              }
+			            },
+						"files" : {
+						  "/home/ec2-user/ansible-hosts" : {
+						    "content" : "localhost"
+						  }
+						},
+			            "sources" : {
+			              "/home/ec2-user/" : "https://github.com/ansible/ansible/archive/v1.6.2.tar.gz"
+			            }
+			          }
+			        }
+			      },
+            "Properties": {
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sda1",
+                        "Ebs": {
+							"DeleteOnTermination" : "false",
+                            "VolumeSize": "40"
+                        }
+                    }
+                ],
+                "ImageId": "ami-2918e35e",
+                "InstanceType": "m3.medium",
+				"IamInstanceProfile": {
+                            "Ref": "ElasticSearchNodeInstanceProfile"
+                        },
+                "KeyName": "elasticsearch",
+                "SecurityGroups": [
+                    {
+                        "Ref": "ElasticSearchSecurityGroup"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Environment",
+                        "Value": {
+                            "Ref": "Environment"
+                        }
+                    }
+                ],
+				"UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+				          "#!/bin/bash\n",
+				          "yum update -y aws-cfn-bootstrap\n",
+
+				          "# Install Ansible\n", 
+						  "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r ElasticSearchProductionNode2 ", " --region ", { "Ref" : "AWS::Region" }, "\n",
+						  
+						  "# Add Ansible Environment\n", 
+						  "source /home/ec2-user/ansible-1.6.2/hacking/env-setup","\n",
+						  
+						  "# Run Ansible\n",
+						  "ansible-pull -U https://github.com/aemruli/elasticsearch-aws.git -i /home/ec2-user/ansible-hosts","\n",
+						  
+						  "# All is well so signal success\n",
+				          "/opt/aws/bin/cfn-signal -e $? '", { "Ref" : "WaitHandle2" }, "'\n"
 				        ]]}}        
             }
         },
@@ -184,22 +253,37 @@
                 "TTL": "60",
                 "ResourceRecords": [
                     {
-                        "Fn::GetAtt": [ "ElasticSearchProductionNode", "PublicIp" ]
+                        "Fn::GetAtt": [ "ElasticSearchProductionNode1", "PublicIp" ]
+                    },
+                    {
+                        "Fn::GetAtt": [ "ElasticSearchProductionNode2", "PublicIp" ]
                     }
                 ]
             }
-        },"WaitHandle" : {
+        },"WaitHandle1" : {
 	      "Type" : "AWS::CloudFormation::WaitConditionHandle"
 	    },
 
-	    "WaitCondition" : {
+	    "WaitCondition1" : {
 	      "Type" : "AWS::CloudFormation::WaitCondition",
-	      "DependsOn" : "ElasticSearchProductionNode",
+	      "DependsOn" : "ElasticSearchProductionNode1",
 	      "Properties" : {
-	        "Handle" : {"Ref" : "WaitHandle"},
+	        "Handle" : {"Ref" : "WaitHandle1"},
 	        "Timeout" : "300"
 	      }
-	    }
+	    },
+		"WaitHandle2" : {
+			      "Type" : "AWS::CloudFormation::WaitConditionHandle"
+			    },
+
+			    "WaitCondition2" : {
+			      "Type" : "AWS::CloudFormation::WaitCondition",
+			      "DependsOn" : "ElasticSearchProductionNode1",
+			      "Properties" : {
+			        "Handle" : {"Ref" : "WaitHandle2"},
+			        "Timeout" : "300"
+			      }
+			    }
      },                                                                          
     "Outputs": {
         "ElasticSearchHostName": {
